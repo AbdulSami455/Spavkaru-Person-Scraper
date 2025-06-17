@@ -5,6 +5,7 @@ interface PersonResult {
   name: string;
   phone: string;
   address: string;
+  additional_info?: string;
 }
 
 const countries = [
@@ -34,10 +35,25 @@ function App() {
     setLoading(true);
     setError('');
     setResults([]);
+    
     try {
+      console.log('Sending request with data:', {
+        country,
+        search_name: searchName,
+        city_name: cityName || undefined,
+        area_code: areaCode || undefined,
+        phone_filter: phoneFilter || undefined,
+        address_filter: addressFilter || undefined,
+        max_pages: maxPages ? parseInt(maxPages) : undefined,
+        results_limit: resultsLimit ? parseInt(resultsLimit) : undefined,
+      });
+
       const response = await fetch('http://localhost:8000/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           country,
           search_name: searchName,
@@ -49,13 +65,23 @@ function App() {
           results_limit: resultsLimit ? parseInt(resultsLimit) : undefined,
         }),
       });
+
       if (!response.ok) {
-        throw new Error('Search failed');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Search failed');
       }
+
       const data = await response.json();
-      setResults(data.results || []);
+      console.log('Received response:', data);
+
+      if (!data.results) {
+        throw new Error('Invalid response format from server');
+      }
+
+      setResults(data.results);
     } catch (err: any) {
-      setError(err.message || 'Unknown error');
+      console.error('Search error:', err);
+      setError(err.message || 'An error occurred during the search');
     } finally {
       setLoading(false);
     }
@@ -75,55 +101,99 @@ function App() {
         </label>
         <label>
           Name:
-          <input value={searchName} onChange={e => setSearchName(e.target.value)} required />
+          <input 
+            value={searchName} 
+            onChange={e => setSearchName(e.target.value)} 
+            required 
+            placeholder="Enter full name"
+          />
         </label>
         <label>
           City Name:
-          <input value={cityName} onChange={e => setCityName(e.target.value)} />
+          <input 
+            value={cityName} 
+            onChange={e => setCityName(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
         <label>
           Area Code:
-          <input value={areaCode} onChange={e => setAreaCode(e.target.value)} />
+          <input 
+            value={areaCode} 
+            onChange={e => setAreaCode(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
         <label>
           Phone Filter:
-          <input value={phoneFilter} onChange={e => setPhoneFilter(e.target.value)} />
+          <input 
+            value={phoneFilter} 
+            onChange={e => setPhoneFilter(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
         <label>
           Address Filter:
-          <input value={addressFilter} onChange={e => setAddressFilter(e.target.value)} />
+          <input 
+            value={addressFilter} 
+            onChange={e => setAddressFilter(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
         <label>
           Max Pages:
-          <input type="number" min="1" value={maxPages} onChange={e => setMaxPages(e.target.value)} />
+          <input 
+            type="number" 
+            min="1" 
+            value={maxPages} 
+            onChange={e => setMaxPages(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
         <label>
           Results Limit:
-          <input type="number" min="1" value={resultsLimit} onChange={e => setResultsLimit(e.target.value)} />
+          <input 
+            type="number" 
+            min="1" 
+            value={resultsLimit} 
+            onChange={e => setResultsLimit(e.target.value)} 
+            placeholder="Optional"
+          />
         </label>
-        <button type="submit" disabled={loading}>Search</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Searching...' : 'Search'}
+        </button>
       </form>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      {results.length > 0 && (
-        <table className="results-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Address</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((r, i) => (
-              <tr key={i}>
-                <td>{r.name}</td>
-                <td>{r.phone}</td>
-                <td>{r.address}</td>
+      
+      {loading && <p className="loading">Searching...</p>}
+      {error && <p className="error">{error}</p>}
+      
+      {results.length > 0 ? (
+        <div className="results-container">
+          <h2>Search Results ({results.length})</h2>
+          <table className="results-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Additional Info</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {results.map((r, i) => (
+                <tr key={i}>
+                  <td>{r.name}</td>
+                  <td>{r.phone}</td>
+                  <td>{r.address}</td>
+                  <td>{r.additional_info}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : !loading && !error && (
+        <p className="no-results">No results found. Try adjusting your search criteria.</p>
       )}
     </div>
   );
