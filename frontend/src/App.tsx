@@ -29,6 +29,7 @@ function App() {
   const [results, setResults] = useState<PersonResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,82 +88,127 @@ function App() {
     }
   };
 
+  const clearForm = () => {
+    setSearchName('');
+    setCityName('');
+    setAreaCode('');
+    setPhoneFilter('');
+    setAddressFilter('');
+    setMaxPages('');
+    setResultsLimit('');
+    setResults([]);
+    setError('');
+  };
+
   return (
     <div className="App">
       <h1>Spavkaru Person Scraper</h1>
       <form onSubmit={handleSubmit} className="search-form">
-        <label>
-          Country:
-          <select value={country} onChange={e => setCountry(e.target.value)}>
-            {countries.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Name:
-          <input 
-            value={searchName} 
-            onChange={e => setSearchName(e.target.value)} 
-            required 
-            placeholder="Enter full name"
-          />
-        </label>
-        <label>
-          City Name:
-          <input 
-            value={cityName} 
-            onChange={e => setCityName(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <label>
-          Area Code:
-          <input 
-            value={areaCode} 
-            onChange={e => setAreaCode(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <label>
-          Phone Filter:
-          <input 
-            value={phoneFilter} 
-            onChange={e => setPhoneFilter(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <label>
-          Address Filter:
-          <input 
-            value={addressFilter} 
-            onChange={e => setAddressFilter(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <label>
-          Max Pages:
-          <input 
-            type="number" 
-            min="1" 
-            value={maxPages} 
-            onChange={e => setMaxPages(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <label>
-          Results Limit:
-          <input 
-            type="number" 
-            min="1" 
-            value={resultsLimit} 
-            onChange={e => setResultsLimit(e.target.value)} 
-            placeholder="Optional"
-          />
-        </label>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </button>
+        <div className="form-section">
+          <label>
+            Country:
+            <select 
+              value={country} 
+              onChange={e => setCountry(e.target.value)}
+              className="country-select"
+            >
+              {countries.map(c => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Name:
+            <input 
+              value={searchName} 
+              onChange={e => setSearchName(e.target.value)} 
+              required 
+              placeholder="Enter full name"
+              className="name-input"
+            />
+          </label>
+          <label>
+            City Name:
+            <input 
+              value={cityName} 
+              onChange={e => setCityName(e.target.value)} 
+              placeholder="Optional"
+            />
+          </label>
+        </div>
+
+        <div className="form-actions">
+          <button 
+            type="button" 
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="toggle-advanced"
+          >
+            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+          </button>
+        </div>
+
+        {showAdvanced && (
+          <div className="advanced-options">
+            <label>
+              Area Code:
+              <input 
+                value={areaCode} 
+                onChange={e => setAreaCode(e.target.value)} 
+                placeholder="Optional"
+              />
+            </label>
+            <label>
+              Phone Filter:
+              <input 
+                value={phoneFilter} 
+                onChange={e => setPhoneFilter(e.target.value)} 
+                placeholder="Optional"
+              />
+            </label>
+            <label>
+              Address Filter:
+              <input 
+                value={addressFilter} 
+                onChange={e => setAddressFilter(e.target.value)} 
+                placeholder="Optional"
+              />
+            </label>
+            <label>
+              Max Pages:
+              <input 
+                type="number" 
+                min="1" 
+                value={maxPages} 
+                onChange={e => setMaxPages(e.target.value)} 
+                placeholder="Optional"
+              />
+            </label>
+            <label>
+              Results Limit:
+              <input 
+                type="number" 
+                min="1" 
+                value={resultsLimit} 
+                onChange={e => setResultsLimit(e.target.value)} 
+                placeholder="Optional"
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="form-actions">
+          <button type="submit" disabled={loading} className="search-button">
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+          <button 
+            type="button" 
+            onClick={clearForm} 
+            className="clear-button"
+            disabled={loading}
+          >
+            Clear Form
+          </button>
+        </div>
       </form>
       
       {loading && <p className="loading">Searching...</p>}
@@ -171,26 +217,28 @@ function App() {
       {results.length > 0 ? (
         <div className="results-container">
           <h2>Search Results ({results.length})</h2>
-          <table className="results-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Address</th>
-                <th>Additional Info</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((r, i) => (
-                <tr key={i}>
-                  <td>{r.name}</td>
-                  <td>{r.phone}</td>
-                  <td>{r.address}</td>
-                  <td>{r.additional_info}</td>
+          <div className="table-container">
+            <table className="results-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Additional Info</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {results.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.name}</td>
+                    <td>{r.phone}</td>
+                    <td>{r.address}</td>
+                    <td>{r.additional_info}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : !loading && !error && (
         <p className="no-results">No results found. Try adjusting your search criteria.</p>
